@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub User Events Fetcher</title>
+    <style>
+      .event-item {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+      }
+      .avatar {
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+      }
+      .event-header {
+        font-size: 18px;
+        font-weight: bold;
+      }
+      .event-repo,
+      .event-type,
+      .event-time {
+        margin-top: 5px;
+      }
+      .event-description {
+        margin-top: 10px;
+        font-size: 14px;
+      }
+    </style>
+    <script>
+      async function fetchEvents() {
+        const username = document.getElementById("username").value;
+        if (!username) {
+          alert("Please enter a username");
+          return;
+        }
+
+        const response = await fetch(`/api/events/${username}`);
+        const events = await response.json();
+
+        const resultDiv = document.getElementById("result");
+        resultDiv.innerHTML = ""; // Clear previous results
+
+        if (events.error) {
+          resultDiv.innerHTML = `<p>${events.error}</p>`;
+        } else {
+          events.forEach((event) => {
+            let eventHtml = getHtmlForEvent(event);
+
+            resultDiv.innerHTML += eventHtml;
+          });
+        }
+      }
+
+      function getHtmlForEvent(event) {
+        let descriptionHtml = "";
+        if (event.description) {
+          descriptionHtml = `<div class="event-description">${event.description}</div>`;
+        }
+
+        return `
+                        <div class="event-item">
+                            <div class="event-header">
+                                <img src="${event.actorAvatarUrl}" alt="Avatar" class="avatar">
+                                <strong>${event.summaryLine}</strong>
+                            </div>
+                            ${descriptionHtml}
+                        </div>
+                    `;
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Enter GitHub Username to Fetch Events</h1>
+    <input type="text" id="username" placeholder="Enter GitHub username" />
+    <button onclick="fetchEvents()">Fetch Events</button>
+
+    <div id="result" style="margin-top: 20px"></div>
+  </body>
+</html>
