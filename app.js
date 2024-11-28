@@ -67,8 +67,10 @@ function getOneLineSummaryAndDescription(event) { // TODO: make logic to merge s
         //          return 'reviewed a pull request';
         default:
             const msg = `Unknown event type: ${eventType}`;
+            console.log("================================================================================");
             console.log(msg);
-            alert(msg);
+            console.log(event);
+            console.log("================================================================================");
             return actorHref + ' triggered ' + eventType;
     }
 }
