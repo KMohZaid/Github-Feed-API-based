@@ -3,7 +3,7 @@ const path = require('path');
 const axios = require('axios');
 const markdownit = require('markdown-it');
 const md = new markdownit();
-// const fs = require('fs');
+const fs = require('fs');
 const app = express();
 
 const PORT = 3000;
@@ -124,6 +124,19 @@ function processResponse(eventsData) {
     });
 }
 
+function getCacheResponse(username) {
+    const filename = `temp.cache.${username}.json`;
+    if (fs.existsSync(filename)) {
+        const data = fs.readFileSync(filename);
+        return JSON.parse(data);
+    }
+    return null;
+}
+
+function saveCacheResponse(username, data) {
+    const filename = `temp.cache.${username}.json`;
+    fs.writeFileSync(filename, JSON.stringify(data));
+}
 // Serve the static HTML page
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -132,18 +145,25 @@ app.get('/api/events/:username', async (req, res) => {
     const { username } = req.params;
 
     try {
-        // Fetching event data from GitHub API
-        // /received_events for event user sees, /events for event user triggers
-        const response = await axios.get(`https://api.github.com/users/${username}/received_events?page=1&per_page=100`);
-        const response2 = await axios.get(`https://api.github.com/users/${username}/received_events?page=2&per_page=100`);
-        const eventsData = [...response.data, ...response2.data];
+        const cache = getCacheResponse(username);
+        let eventsData;
+        if (cache) {
+            eventsData = cache;
+        } else {
+            // Fetching event data from GitHub API
+            // /received_events for event user sees, /events for event user triggers
+            const response = await axios.get(`https://api.github.com/users/${username}/received_events?page=1&per_page=100`);
+            const response2 = await axios.get(`https://api.github.com/users/${username}/received_events?page=2&per_page=100`);
+            eventsData = [...response.data, ...response2.data];
+            console.log(`Fetched ${eventsData.length} received events for ${username}`);
+            saveCacheResponse(username, eventsData);
 
-        // await fs.promises.writeFile('received_events.json', JSON.stringify(eventsData));
+            // await fs.promises.writeFile('received_events.json', JSON.stringify(eventsData));
 
-        //        const fileContent = await fs.promises.readFile('received_events.json', 'utf8');
-        //        const eventsData = JSON.parse(fileContent);
+            //        const fileContent = await fs.promises.readFile('received_events.json', 'utf8');
+            //        const eventsData = JSON.parse(fileContent);
+        }
 
-        console.log(`Fetched ${eventsData.length} received events for ${username}`);
 
         const processedEvents = processResponse(eventsData);
         res.json(processedEvents);
