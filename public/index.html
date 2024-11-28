@@ -32,8 +32,7 @@
       }
     </style>
     <script>
-      async function fetchEvents() {
-        const username = document.getElementById("username").value;
+      async function fetchEvents(username) {
         if (!username) {
           alert("Please enter a username");
           return;
@@ -72,12 +71,32 @@
                         </div>
                     `;
       }
+
+      let username = /\?username=([^&]+)/.exec(window.location.search)[1];
+      if (username) {
+        fetchEvents(username);
+        setTimeout(() => {
+          document.getElementById("username").value = username;
+        }, 1000);
+      }
+
+      function redirect() {
+        const username = document.getElementById("username").value;
+
+        if (!username) {
+          alert("Please enter a username");
+          return;
+        }
+
+        window.location.href = `/?username=${username}`;
+      }
+
     </script>
   </head>
   <body>
     <h1>Enter GitHub Username to Fetch Events</h1>
     <input type="text" id="username" placeholder="Enter GitHub username" />
-    <button onclick="fetchEvents()">Fetch Events</button>
+    <button onclick="redirect()">Fetch Events</button>
 
     <div id="result" style="margin-top: 20px"></div>
   </body>
