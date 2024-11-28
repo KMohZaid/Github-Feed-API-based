@@ -19,6 +19,8 @@ function getOneLineSummaryAndDescription(event) { // TODO: make logic to merge s
     const actorHref = `<a href="${actorAPIUrl}" target="_blank">${actorName}</a>`;
     const repoHref = `<a href="${repoAPIUrl}" target="_blank">${repoName}</a>`;
 
+    let action, issueHref, body;
+
     const eventType = event.type;
     switch (eventType) {
         case 'WatchEvent':
@@ -43,16 +45,33 @@ function getOneLineSummaryAndDescription(event) { // TODO: make logic to merge s
             return actorHref + ' made ' + repoHref + ' public';
         case 'MemberEvent': // XXX: this event is not displayed in github normal feed, because it is offtopic naa
             const whomHref = `<a href="${event.payload.member.html_url}" target="_blank">${event.payload.member.login}</a>`;
-            const action = event.payload.action;
+            action = event.payload.action;
             return actorHref + ' ' + action + ' member ' + whomHref + ' to ' + repoHref;
 
+        case 'IssuesEvent':
+            issueHref = `<a href="${event.payload.issue.html_url}" target="_blank">${event.payload.issue.title} #${event.payload.issue.number}</a>`
+            action = event.payload.action;
+            body = event.payload.issue.body
+            body = body ? md.render(body) : ""; // TODO: limit render and add Read more url??
+            return {
+                summaryLine: `${actorHref} ${action} issue ${issueHref} on ${repoHref}`,
+                description: body,
+            }
         case 'IssueCommentEvent':
-            const issueHref = `<a href="${event.payload.issue.html_url}" target="_blank">${event.payload.issue.title} #${event.payload.issue.number}</a>`;
-            const body = md.render(event.payload.comment.body);
+            issueHref = `<a href="${event.payload.issue.html_url}" target="_blank">${event.payload.issue.title} #${event.payload.issue.number}</a>`;
+            body = md.render(event.payload.comment.body);
             return {
                 summaryLine: actorHref + ' commented on ' + issueHref,
                 description: body,
             };
+
+        case 'PullRequestEvent':
+            prHref = `<a href="${event.payload.pull_request.html_url}" target="_blank">${event.payload.pull_request.title} #${event.payload.pull_request.number}</a>`;
+            action = event.payload.action;
+            return {
+                summaryLine: `${actorHref} ${action} pull request ${prHref} on ${repoHref}`,
+                description: "NO DESCRIPTION -> TODO: limit render lines because this is a feed",
+            }
 
         // INFO: below events are identified by AI assistant, but i didn't find them in my feed api
         //      case 'PullRequestEvent':
