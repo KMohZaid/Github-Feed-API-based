@@ -1,6 +1,8 @@
 const express = require('express');
 const path = require('path');
 const axios = require('axios');
+const markdownit = require('markdown-it');
+const md = new markdownit();
 // const fs = require('fs');
 const app = express();
 
@@ -43,6 +45,14 @@ function getOneLineSummaryAndDescription(event) { // TODO: make logic to merge s
             const whomHref = `<a href="${event.payload.member.html_url}" target="_blank">${event.payload.member.login}</a>`;
             const action = event.payload.action;
             return actorHref + ' ' + action + ' member ' + whomHref + ' to ' + repoHref;
+
+        case 'IssueCommentEvent':
+            const issueHref = `<a href="${event.payload.issue.html_url}" target="_blank">${event.payload.issue.title} #${event.payload.issue.number}</a>`;
+            const body = md.render(event.payload.comment.body);
+            return {
+                summaryLine: actorHref + ' commented on ' + issueHref,
+                description: body,
+            };
 
         // INFO: below events are identified by AI assistant, but i didn't find them in my feed api
         //      case 'PullRequestEvent':
